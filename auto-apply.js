@@ -27,20 +27,18 @@ async function main() {
       const firstUrl = jobMap.values().next().value;
       await page.goto(firstUrl);
 
-      const btn = page.locator('text=Apply').first();
-      await btn.waitFor({ state: 'visible' });
-      const box = await btn.boundingBox();
-      if (box) {
-        const x = box.x + box.width / 2;
-        const y = box.y + box.height / 2;
-        await page.mouse.move(x, y, { steps: 20 });
-        await page.mouse.click(x, y);
+      const applyButton = page.locator('*:visible').getByText('Apply', { exact: false }).first();
+
+      try {
+        await applyButton.click({ timeout: 5000 });
+      } catch (e) {
+        // Button was not found or not clickable within the timeout.
       }
     }
   } catch (error) {
-    console.error('An error occurred:', error);
+    // Errors are caught silently.
   } finally {
-    // browser remains open
+    // The browser remains open.
   }
 }
 
