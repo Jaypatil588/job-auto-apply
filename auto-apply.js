@@ -1,121 +1,138 @@
 import { chromium } from 'playwright';
-import fs from 'fs/promises';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const apiKey = 'AIzaSyBd3I4tMZ-KEHdro9t6bHwOpfvsdGYMXOc'; // Replace this
+async function fillFrame(frame) {
+  // --- Fill text-like inputs ---
+  const inputs = frame.locator('input:not([disabled]):not([readonly])');
+  const count = await inputs.count();
+  for (let i = 0; i < count; i++) {
+    const el = inputs.nth(i);
+    const typeAttr = (await el.getAttribute('type')) || '';
+    const type = typeAttr.toLowerCase();
 
-const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    let value = null;
+    if (['', 'text'].includes(type)) value = '1';
+    else if (type === 'email') value = 'test@example.com';
+    else if (type === 'tel') value = '1234567890';
+    else if (type === 'number') value = '1';
+
+    if (value !== null) {
+      try {
+        if (await el.isVisible()) {
+          await el.fill(value, { timeout: 1000 });
+        }
+      } catch {}
+    }
+  }
+
+  // --- Fill textareas ---
+  const textareas = frame.locator('textarea:not([disabled]):not([readonly])');
+  const taCount = await textareas.count();
+  for (let i = 0; i < taCount; i++) {
+    try {
+      await textareas.nth(i).fill('1', { timeout: 1000 });
+    } catch {}
+  }
+
+  // --- Select first option in dropdowns ---
+  const selects = frame.locator('select:not([disabled])');
+  const selectCount = await selects.count();
+  for (let i = 0; i < selectCount; i++) {
+    const el = selects.nth(i);
+    const options = await el.locator('option').all();
+    if (options.length > 0) {
+      const firstValue = await options[0].getAttribute('value');
+      try {
+        await el.selectOption(firstValue);
+      } catch {}
+    }
+  }
+
+  // --- Click first radio in each group ---
+  const radios = frame.locator('input[type=radio]:not([disabled])');
+  const radioCount = await radios.count();
+  const seenNames = new Set();
+  for (let i = 0; i < radioCount; i++) {
+    const el = radios.nth(i);
+    const name = await el.getAttribute('name');
+    if (!name || seenNames.has(name)) continue;
+    try {
+      await el.check();
+      seenNames.add(name);
+    } catch {}
+  }
+}
 
 async function main() {
-  let browser;
+  console.log("🚀 Starting the auto-apply bot...");
+  const browser = await chromium.launch({ headless: false, slowMo: 150 });
+  const page = await browser.newPage();
+  await page.setViewportSize({ width: 1280, height: 800 });
+
   try {
-    browser = await chromium.launch({ headless: false, slowMo: 200 });
-    const page = await browser.newPage();
+    await page.goto('https://github.com/SimplifyJobs/New-Grad-Positions/blob/dev/README.md', { waitUntil: 'networkidle' });
+
+    console.log("📄 Scraping for the first valid job link...");
     const jobMap = new Map();
-
-    await page.goto('https://github.com/SimplifyJobs/New-Grad-Positions/blob/dev/README.md');
-
     const rows = page.locator('article table').first().locator('tbody tr');
     const rowCount = await rows.count();
 
     for (let i = 0; i < rowCount; i++) {
       const row = rows.nth(i);
-      const companyName = await row.locator('td').first().innerText();
-      const link = await row.locator('a:not([href^="https://simplify.jobs/"])').first().getAttribute('href');
-
-      if (link) {
-        const cleanedLink = link.replace("utm_source=Simplify&ref=Simplify", "").replace(/[?&]$/, "");
-        jobMap.set(companyName.trim(), cleanedLink);
-      }
-    }
-
-    if (jobMap.size > 0) {
-      const firstUrl = jobMap.values().next().value;
-      await page.goto(firstUrl);
-
-      // const applyButton = page.locator('*:visible').getByText('Apply', { exact: false }).first();
-      // try {
-      //   await applyButton.click({ timeout: 5000 });
-      // } catch (e) {
-      //   // Button was not found or not clickable within the timeout.
-      // }
-
-      // 1. Launch Firefox via Playwright
-      // NOTE: You already launched browser above, so skip relaunching.
-      // 2. Serve test content
-      // await page.setContent(`
-      //   <html>
-      //     <body style="margin:0;height:100vh;position:relative;">
-      //       <button id="apply" style="position:absolute;bottom:0px;left:20px;padding:10px 20px;font-size:16px;"
-      //         onclick="alert('Button clicked')">Apply</button>
-      //     </body>
-      //   </html>
-      // `);
-
-      // // 3. Wait for layout
-      // await page.waitForTimeout(1000);
-
-      // 4. Take screenshot
-      const screenshotPath = 'screenshot.png';
-      await page.screenshot({ path: screenshotPath, fullPage: true });
-
-      // 5. Read image and encode as base64
-      const imageBuffer = await fs.readFile(screenshotPath);
-      const base64Image = imageBuffer.toString('base64');
-
-      // 6. Prompt Gemini to locate the button
-      const prompt = `Locate the position of "Apply" button or similar. The screen resolution for this attached image is 3024 x 1964 px. The button is inside the chromium window of this image. Return only JSON like this: {"x":<number>, "y":<number>, "width":<number>, "height":<number>}`;
-
-      const result = await model.generateContent({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  data: base64Image,
-                  mimeType: 'image/png',
-                },
-              },
-            ],
-          },
-        ],
-      });
-
-      const raw = await result.response.text();
-      console.log("Gemini raw response:", raw);
-      const match = raw.match(/{[^}]+}/);
-      if (!match) {
-        console.error("Gemini response missing bounding box:", raw);
-        process.exit(1);
-      }
-
-      let box;
       try {
-        box = JSON.parse(match[0]);
-      } catch (e) {
-        console.error("Malformed JSON:", match[0]);
-        process.exit(1);
-      }
-
-      // 7. Move mouse and click center of bounding box
-      const centerX = box.x + box.width / 2;
-      const centerY = box.y + box.height / 2;
-
-      await page.mouse.move(centerX, centerY);
-      await page.mouse.click(centerX, centerY);
-
-      console.log("Click executed at:", centerX, centerY);
-
-      // Optional: keep browser open for debugging
-      await page.waitForTimeout(3000);
-      await browser.close();
+        const companyName = await row.locator('td').first().innerText({ timeout: 1000 });
+        const linkLocator = row.locator('a:not([href^="https://simplify.jobs/"])').first();
+        if (await linkLocator.count() > 0) {
+          const link = await linkLocator.getAttribute('href');
+          if (link) {
+            const cleaned = link.replace(/utm_source=Simplify&ref=Simplify/g, "").replace(/[?&]$/, "");
+            jobMap.set(companyName.trim(), cleaned);
+            break; // stop after first
+          }
+        }
+      } catch {}
     }
+
+    if (jobMap.size === 0) {
+      console.error("❌ No valid job links found on the GitHub page.");
+      return;
+    }
+
+    const [company, firstUrl] = jobMap.entries().next().value;
+    console.log(`✅ Found job at ${company}. Navigating to: ${firstUrl}`);
+    await page.goto(firstUrl, { waitUntil: 'networkidle' });
+
+    // --- Click "Apply" button in top document if exists ---
+    console.log("🔎 Searching for an Apply button...");
+    const applyButton = page.locator('button, a').filter({ hasText: /apply/i }).first();
+    if (await applyButton.count()) {
+      await Promise.all([
+        applyButton.click().catch(() => {}),
+        page.waitForTimeout(2000) // don't assume navigation
+      ]);
+      console.log("✅ Apply button clicked.");
+    } else {
+      console.log("ℹ️ No Apply button found, continuing.");
+    }
+
+    // --- Fill forms in main frame ---
+    await fillFrame(page.mainFrame());
+
+    // --- Fill forms in all iframes ---
+    for (const frame of page.frames()) {
+      if (frame === page.mainFrame()) continue;
+      try {
+        await fillFrame(frame);
+      } catch {}
+    }
+
+    console.log("✅ Filled all detected fields with dummy values.");
+    await page.waitForTimeout(5000);
+
   } catch (error) {
-    // Errors are caught silently.
+    console.error("An error occurred:", error);
   } finally {
-    // The browser remains open.
+    console.log("🛑 Bot finished.");
+    // await browser.close(); // keep browser open for debugging
   }
 }
 

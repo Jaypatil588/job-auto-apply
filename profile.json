@@ -1,0 +1,159 @@
+{
+  "FirstName": "Jay",
+  "LastName":"Patil",
+  "email": "Jaypatil588@gmail.com",
+  "phone": "6693407293",
+  "linkedin": "https://www.linkedin.com/in/jaypatil588",
+  "address": "Santa Clara, CA",
+  "address_line1": "431 el camino real",
+  "city": "Santa Clara",
+  "state": "CA",
+  "postal_code": "95050",
+  "citizenship": "India",
+  "us_citizen": false,
+  "work_authorization": "Authorized to work in the US without sponsorship (except major FAANG companies)",
+  "needs_visa_sponsorship": false,
+  "veteran_status": "Not a veteran",
+  "disability_status": "Not disabled",
+  "ethnicity": "Asian",
+  "previously_employed_at_company": false,
+  "gender": "Male",
+  "education": [
+    {
+      "school": "Santa Clara University",
+      "degree": "Master of Science",
+      "major": "Computer Science and Engineering",
+      "start_date": "September 2024",
+      "end_date": "June 2026",
+      "location": "Santa Clara, CA",
+      "courses": [
+        "Flutter mobile development",
+        "Advanced Data structures",
+        "GenAI",
+        "Data mining",
+        "SQA",
+        "Advanced SQL",
+        "Machine learning"
+      ]
+    },
+    {
+      "school": "MIT Art Design & Technology",
+      "degree": "Bachelor of Technology",
+      "major": "Computer Science",
+      "specialization": "Intelligent Systems (AI and IOT systems)",
+      "start_date": "May 2018",
+      "end_date": "August 2022",
+      "location": "India"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Student Web Developer",
+      "company": "Santa Clara University",
+      "location": "Santa Clara, CA",
+      "start_date": "June 2025",
+      "end_date": "October 2025",
+      "responsibilities": [
+        "Built an interactive fellowships database in Firebase with embedded JavaScript in TerminalFour, enabling roughly 200 students/month to discover opportunities and reducing average search time from 10 minutes to under 1 minute.",
+        "Developed an OpenAI fine-tuned RAG chatbot for the SCU Provost's office answering 100+ queries/month with 95% accuracy, outperforming NotebookLLM by 15% fewer errors in context retrieval.",
+        "Delivered general website upgrades that cut page load times by ~30%."
+      ]
+    },
+    {
+      "title": "Graduate Web Intern",
+      "company": "Santa Clara University",
+      "location": "Santa Clara, CA",
+      "start_date": "April 2025",
+      "end_date": "June 2025",
+      "responsibilities": [
+        "Redesigned the off-campus listings platform using TerminalFour and React, resulting in 250 active listings and a 20% increase in student housing matches."
+      ]
+    },
+    {
+      "title": "ECC Lab Assistant",
+      "company": "Santa Clara University",
+      "location": "Santa Clara, CA",
+      "start_date": "January 2025",
+      "end_date": "Present",
+      "responsibilities": [
+        "Provided first-line technical support and led infrastructure improvement projects, resolving hardware/software issues, supporting virtualization tools, and automating diagnostics using Python and Ansible.",
+        "Improved curriculum design by analyzing 1000 student feedback responses; built an NLP pipeline with PyTorch + Hugging Face achieving 12% higher F1 scores over logistic regression and LDA baselines in sentiment and topic classification.",
+        "Delivered insights that led to three curriculum adjustments (grading policy revisions, clearer assignment guidelines, workload redistribution) boosting student satisfaction by 15% in follow-up surveys."
+      ]
+    },
+    {
+      "title": "EV Software Engineer (Embedded, Full-Stack & VMS)",
+      "company": "Ador Powertron",
+      "location": "Pune, India",
+      "start_date": "March 2022",
+      "end_date": "August 2024",
+      "responsibilities": [
+        "Led the development of intelligent charging systems for EV infrastructure and CCS chargers, focusing on HMI-based screens and CAN communications.",
+        "Integrated EVSE hardware using the OCPP1.6 protocol; built a C#-based EV emulator to simulate battery charging curves and test charging scenarios, accelerating hardware validation and feature rollout timeline by 60%.",
+        "Contributed to early-stage implementations of VGI smart charging, dynamic load balancing algorithm, dual-VCCU switching, and auto-charge scripts, reducing charging times by 50% by maximizing allocated KW energy.",
+        "Worked on smart ANPR systems and power throttling systems that optimized grid interactions, lowering peak-hour energy costs by up to 20%.",
+        "Designed REST APIs and integrated frontend applications (React.js, TypeScript) with OCPP for seamless user interaction and charger control, reducing user interaction latency by 12 seconds; collaborated with German partner ECOG to align OCPP2.0 and V2X standards.",
+        "Developed SMTP-NTCIP based full-stack software for highway road signs, enabling remote operation via IoT and centralized integrated traffic management system, reducing accidents in hotspots by 90%."
+      ]
+    }
+  ],
+  "publications": [
+    {
+      "title": "Framework for Cloud-Based Messaging System Using MQTT",
+      "conference": "ACTHPA'22",
+      "publisher": "IEEE",
+      "year": 2020,
+      "summary": "Designed scalable AWS IoT solution for two-way device connections using MQTT."
+    },
+    {
+      "title": "Development of a Comparison Based Medicine Purchasing System",
+      "summary": "Developed a system to compare medicine prices across cities and platforms, helping users find the most affordable medicines."
+    }
+  ],
+  "achievements_projects": [
+    "Ranked 1st in Best Developer Feedback at Adobe systems hackathon.",
+    "Awarded \u201cBest Junior Developer\u201d at Ador Powertron due to significant impact on EV feature development.",
+    "Emotico: built a generative AI system that mimics user emotions in real-time using Node.js and Veo 3.",
+    "Built gesture-guided object tracking robot arm using ROS, dynamic lightings for Playstation5 using Arduino and Raspberry Pi, control circuit for DIY smart home automation, NAS storage and more."
+  ],
+  "skills": [
+    "Python",
+    "C#",
+    ".NET",
+    "ReactJS",
+    "TypeScript",
+    "Firebase",
+    "JavaScript",
+    "TerminalFour",
+    "PyTorch",
+    "Hugging Face",
+    "OCPP",
+    "CAN Communications",
+    "REST APIs",
+    "Ansible",
+    "Machine Learning",
+    "Data Mining",
+    "Generative AI",
+    "Full Stack Development",
+    "Embedded Systems",
+    "IoT"
+  ],
+  "external_links": {
+    "linkedin": "https://www.linkedin.com/in/jaypatil588"
+  }
+  ,
+  "user_instructions": {
+    "ethnicity": "Asian",
+    "nationality": "Indian",
+    "visa_sponsorship": "Does not require sponsorship for most jobs; will accept sponsorship only from major FAANG or equivalent companies that do not reject candidates needing H1B.",
+    "veteran_status": "Not a veteran",
+    "disability_status": "Not disabled",
+    "us_citizen": false,
+    "prior_employment": "Has never worked for any of the companies currently being applied to.",
+    "phone_number": "6693407293",
+    "gender": "Male",
+    "candidate_goals": "Prioritize getting selected for roles while adhering to application policies and maximizing chances of success.",
+    "cover_letter_rules": "Cover letters must sound human and avoid any form of dashes or underscores. The sentence structure must not use the pattern 'not only X, but also Y'; instead describe the qualities directly.",
+    "response_rules": "Assistant responses should avoid emotionally positive tone, glazing, and should not praise or compliment the user. All statements must be logical, accurate and concise. Code provided should be full and working without requiring user modification."
+  }
+}
