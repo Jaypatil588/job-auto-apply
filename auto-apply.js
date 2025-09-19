@@ -1,284 +1,327 @@
 import { chromium } from 'playwright';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import 'dotenv/config';
+import path from 'path'; // Needed for file uploads
 
-// --- Personal Context & AI Setup ---
-const personalContext = {
-    "FirstName": "Jay",
-    "LastName": "Patil",
-    "email": "Jaypatil588@gmail.com",
-    "phone": "6693407293",
-    "linkedin": "https://www.linkedin.com/in/jaypatil588",
-    "address": "Santa Clara, CA",
-    "address_line1": "431 el camino real",
-    "city": "Santa Clara",
-    "state": "CA",
-    "postal_code": "95050",
-    "citizenship": "India",
-    "us_citizen": false,
-    "work_authorization": "Authorized to work in the US without sponsorship (except major FAANG companies)",
-    "needs_visa_sponsorship": false,
-    "veteran_status": "Not a veteran",
-    "disability_status": "Not disabled",
-    "ethnicity": "Asian",
-    "previously_employed_at_company": false,
-    "gender": "Male",
-    "education": [{
-        "school": "Santa Clara University",
-        "degree": "Master of Science",
-        "major": "Computer Science and Engineering",
-        "start_date": "September 2024",
-        "end_date": "June 2026",
-        "location": "Santa Clara, CA",
-        "courses": ["Flutter mobile development", "Advanced Data structures", "GenAI", "Data mining", "SQA", "Advanced SQL", "Machine learning"]
-    }, {
-        "school": "MIT Art Design & Technology",
-        "degree": "Bachelor of Technology",
-        "major": "Computer Science",
-        "specialization": "Intelligent Systems (AI and IOT systems)",
-        "start_date": "May 2018",
-        "end_date": "August 2022",
-        "location": "India"
-    }],
-    "experience": [{
-        "title": "Student Web Developer",
-        "company": "Santa Clara University",
-        "location": "Santa Clara, CA",
-        "start_date": "June 2025",
-        "end_date": "October 2025",
-        "responsibilities": ["Built an interactive fellowships database in Firebase with embedded JavaScript in TerminalFour, enabling roughly 200 students/month to discover opportunities and reducing average search time from 10 minutes to under 1 minute.", "Developed an OpenAI fine-tuned RAG chatbot for the SCU Provost's office answering 100+ queries/month with 95% accuracy, outperforming NotebookLLM by 15% fewer errors in context retrieval.", "Delivered general website upgrades that cut page load times by ~30%."]
-    }, {
-        "title": "Graduate Web Intern",
-        "company": "Santa Clara University",
-        "location": "Santa Clara, CA",
-        "start_date": "April 2025",
-        "end_date": "June 2025",
-        "responsibilities": ["Redesigned the off-campus listings platform using TerminalFour and React, resulting in 250 active listings and a 20% increase in student housing matches."]
-    }, {
-        "title": "ECC Lab Assistant",
-        "company": "Santa Clara University",
-        "location": "Santa Clara, CA",
-        "start_date": "January 2025",
-        "end_date": "Present",
-        "responsibilities": ["Provided first-line technical support and led infrastructure improvement projects, resolving hardware/software issues, supporting virtualization tools, and automating diagnostics using Python and Ansible.", "Improved curriculum design by analyzing 1000 student feedback responses; built an NLP pipeline with PyTorch + Hugging Face achieving 12% higher F1 scores over logistic regression and LDA baselines in sentiment and topic classification.", "Delivered insights that led to three curriculum adjustments (grading policy revisions, clearer assignment guidelines, workload redistribution) boosting student satisfaction by 15% in follow-up surveys."]
-    }, {
-        "title": "EV Software Engineer (Embedded, Full-Stack & VMS)",
-        "company": "Ador Powertron",
-        "location": "Pune, India",
-        "start_date": "March 2022",
-        "end_date": "August 2024",
-        "responsibilities": ["Led the development of intelligent charging systems for EV infrastructure and CCS chargers, focusing on HMI-based screens and CAN communications.", "Integrated EVSE hardware using the OCPP1.6 protocol; built a C#-based EV emulator to simulate battery charging curves and test charging scenarios, accelerating hardware validation and feature rollout timeline by 60%.", "Contributed to early-stage implementations of VGI smart charging, dynamic load balancing algorithm, dual-VCCU switching, and auto-charge scripts, reducing charging times by 50% by maximizing allocated KW energy.", "Worked on smart ANPR systems and power throttling systems that optimized grid interactions, lowering peak-hour energy costs by up to 20%.", "Designed REST APIs and integrated frontend applications (React.js, TypeScript) with OCPP for seamless user interaction and charger control, reducing user interaction latency by 12 seconds; collaborated with German partner ECOG to align OCPP2.0 and V2X standards.", "Developed SMTP-NTCIP based full-stack software for highway road signs, enabling remote operation via IoT and centralized integrated traffic management system, reducing accidents in hotspots by 90%."]
-    }],
-    "publications": [{
-        "title": "Framework for Cloud-Based Messaging System Using MQTT",
-        "conference": "ACTHPA'22",
-        "publisher": "IEEE",
-        "year": 2020,
-        "summary": "Designed scalable AWS IoT solution for two-way device connections using MQTT."
-    }, {
-        "title": "Development of a Comparison Based Medicine Purchasing System",
-        "summary": "Developed a system to compare medicine prices across cities and platforms, helping users find the most affordable medicines."
-    }],
-    "achievements_projects": ["Ranked 1st in Best Developer Feedback at Adobe systems hackathon.", "Awarded “Best Junior Developer” at Ador Powertron due to significant impact on EV feature development.", "Emotico: built a generative AI system that mimics user emotions in real-time using Node.js and Veo 3.", "Built gesture-guided object tracking robot arm using ROS, dynamic lightings for Playstation5 using Arduino and Raspberry Pi, control circuit for DIY smart home automation, NAS storage and more."],
-    "skills": ["Python", "C#", ".NET", "ReactJS", "TypeScript", "Firebase", "JavaScript", "TerminalFour", "PyTorch", "Hugging Face", "OCPP", "CAN Communications", "REST APIs", "Ansible", "Machine Learning", "Data Mining", "Generative AI", "Full Stack Development", "Embedded Systems", "IoT"],
-    "external_links": {
-        "linkedin": "https://www.linkedin.com/in/jaypatil588"
-    },
-    "user_instructions": {
-        "ethnicity": "Asian",
-        "nationality": "Indian",
-        "visa_sponsorship": "Does not require sponsorship for most jobs; will accept sponsorship only from major FAANG or equivalent companies that do not reject candidates needing H1B.",
-        "veteran_status": "Not a veteran",
-        "disability_status": "Not disabled",
-        "us_citizen": false,
-        "prior_employment": "Has never worked for any of the companies currently being applied to.",
-        "phone_number": "6693407293",
-        "gender": "Male",
-        "candidate_goals": "Prioritize getting selected for roles while adhering to application policies and maximizing chances of success.",
-        "cover_letter_rules": "Cover letters must sound human and avoid any form of dashes or underscores. The sentence structure must not use the pattern 'not only X, but also Y'; instead describe the qualities directly.",
-        "response_rules": "Assistant responses should avoid emotionally positive tone, glazing, and should not praise or compliment the user. All statements must be logical, accurate and concise. Code provided should be full and working without requiring user modification."
+// // --- Personal Context & AI Setup ---
+// const personalContext = {
+//     "FirstName": "Jay",
+//     "LastName": "Patil",
+//     "email": "Jaypatil588@gmail.com",
+//     "phone": "6693407293",
+//     "linkedin": "https://www.linkedin.com/in/jaypatil588",
+//     "address": "Santa Clara, CA",
+//     "address_line1": "431 el camino real",
+//     "city": "Santa Clara",
+//     "state": "CA",
+//     "postal_code": "95050",
+//     "citizenship": "India",
+//     "us_citizen": false,
+//     "work_authorization": "Authorized to work in the US without sponsorship",
+//     "needs_visa_sponsorship": false,
+//     "veteran_status": "Not a veteran",
+//     "disability_status": "Not disabled",
+//     "ethnicity": "Asian",
+//     "previously_employed_at_company": false,
+//     "gender": "Male",
+//     // Make sure 'resume.pdf' is in the same folder as this script
+//     "resume_filename": "resume.pdf",
+//     "education": [{
+//         "school": "Santa Clara University",
+//         "degree": "Master of Science",
+//         "major": "Computer Science and Engineering",
+//         "start_date": "September 2024",
+//         "end_date": "June 2026",
+//         "location": "Santa Clara, CA"
+//     }, {
+//         "school": "MIT Art Design & Technology",
+//         "degree": "Bachelor of Technology",
+//         "major": "Computer Science",
+//         "start_date": "May 2018",
+//         "end_date": "August 2022",
+//         "location": "India"
+//     }],
+//     "experience": [{
+//         "title": "Student Web Developer",
+//         "company": "Santa Clara University",
+//         "location": "Santa Clara, CA",
+//         "start_date": "June 2025",
+//         "end_date": "October 2025"
+//     }],
+// };
+
+    const { readFile } = require('fs/promises');
+
+    async function readJsonFile() {
+        try {
+            const data = await readFile('data.json', 'utf8');
+            const jsonData = JSON.parse(data);
+            console.log(jsonData);
+        } catch (error) {
+            console.error('Error reading or parsing JSON file:', error);
+        }
     }
-};
 
-const apiKey = "AIzaSyBjdtX11b0FSAyE_gGHxwc-dPNpvfMdtvk"
+    const personalContext = readJsonFile();
+
+const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable not set.");
 }
 const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-async function getAiGeneratedValues(labels) {
+// --- Helper Functions (Unchanged) ---
+async function getAiSuggestionForSingleField(field) {
+    console.log(`🧠 Asking AI for help with field: "${field.name}"`);
+    let prompt;
+    const contextText = `My Profile: ${JSON.stringify(personalContext)}`;
+
+    if (field.type === 'select' && field.options) {
+        prompt = `Based on my profile, which of the following options is the best choice for the form field "${field.name}"?\nOptions: ${JSON.stringify(field.options)}\n${contextText}\nRespond with ONLY the exact text of the best option and nothing else.`;
+    } else {
+        prompt = `Based on my profile, what is the best value to enter for the form field "${field.name}"?\n${contextText}\nRespond with ONLY the value and nothing else.`;
+    }
     try {
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            generationConfig: {
-                responseMimeType: "application/json"
-            }
-        });
-
-        const prompt = `
-      Based on the provided context about a person, fill in the values for the following list of form fields.
-      Respond ONLY with a single, raw JSON object where the keys are the exact field names from the list and the values are the filled-in answers. Do not add any extra text, explanations, or markdown formatting.
-
-      CONTEXT:
-      ${JSON.stringify(personalContext, null, 2)}
-
-      FORM FIELDS TO FILL:
-      ${JSON.stringify(labels)}
-    `;
-
         const result = await model.generateContent(prompt);
-        const response = result.response;
-        const generatedText = response.text();
-        const filledValues = JSON.parse(generatedText);
-
-        console.log("🧠 AI Response (Live):", filledValues);
-        return new Map(Object.entries(filledValues));
-
+        return result.response.text().trim();
     } catch (error) {
-        console.error("❌ Failed to call Gemini API:", error);
-        return new Map(); // Return an empty map on failure to prevent script crash
+        console.error(`❌ AI failed for field "${field.name}":`, error.message);
+        return null;
     }
 }
 
-// --- Playwright Automation Logic ---
-
-async function fillFrame(frame) {
-    // ... (This function remains unchanged)
-    const fields = new Map();
-    const textInputs = frame.locator('input:not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]):not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])');
-
-    for (let i = 0; i < await textInputs.count(); i++) {
-        const el = textInputs.nth(i);
-        try {
-            if (await el.isVisible()) {
-                const label = await el.getAttribute('aria-label') || await el.getAttribute('placeholder') || await el.getAttribute('name');
-                if (label) fields.set(label, el);
-            }
-        } catch {}
+async function getElementLabel(element) {
+    for (const attr of ['aria-label', 'placeholder', 'name', 'id']) {
+        const value = await element.getAttribute(attr);
+        if (value) return value;
     }
+    return null;
+}
 
-    if (fields.size > 0) {
-        const labelsToFill = Array.from(fields.keys());
-        console.log(`🤖 Sending prompt for fields: ${labelsToFill.join(', ')}`);
-        const aiValues = await getAiGeneratedValues(labelsToFill);
-        for (const [label, locator] of fields.entries()) {
-            try {
-                const value = aiValues.get(label);
-                if (value) await locator.fill(String(value), {
-                    timeout: 1000
-                });
-            } catch {}
+function findBestKeyMatch(label) {
+    if (!label) return null;
+    // FIX: This function now removes spaces to ensure consistent matching.
+    const normalize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    const normalizedLabel = normalize(label);
+    if (!normalizedLabel) return null;
+
+    let bestMatch = null;
+    let highScore = 0;
+
+    for (const key in personalContext) {
+        // Example: "FirstName" becomes "firstname"
+        const normalizedKey = normalize(key);
+        let score = 0;
+
+        // "firstname" is included in "firstname"
+        if (normalizedLabel.includes(normalizedKey) || normalizedKey.includes(normalizedLabel)) {
+            score = 8;
+        }
+
+        if (score > highScore) {
+            highScore = score;
+            bestMatch = key;
         }
     }
+    // Using a threshold of 5 to ensure a reasonably confident match
+    return highScore > 5 ? bestMatch : null;
+}
 
-    const selects = frame.locator('select:not([disabled])');
+function getValueFromContext(key, fieldName = '') {
+    const value = personalContext[key];
+    const lowerFieldName = fieldName.toLowerCase();
+
+    const yesNoKeywords = ['sponsorship', 'visa', 'authorized', 'legally', 'require'];
+    if (yesNoKeywords.some(kw => lowerFieldName.includes(kw))) {
+        return personalContext.needs_visa_sponsorship ? 'Yes' : 'No';
+    }
+    if (key === 'education') {
+        const latest = value[0];
+        if (lowerFieldName.includes('school') || lowerFieldName.includes('university')) return latest.school;
+        if (lowerFieldName.includes('degree')) return latest.degree;
+        if (lowerFieldName.includes('major') || lowerFieldName.includes('discipline')) return latest.major;
+        return `${latest.degree} in ${latest.major}, ${latest.school}`;
+    }
+    if (key === 'experience') return `${value[0].title} at ${value[0].company}`;
+    if (key === 'address' || key === 'location') return personalContext.city;
+    if (Array.isArray(value)) return value.join(', ');
+    return String(value);
+}
+
+function findBestDropdownOption(contextValue, options) {
+    if (!contextValue) return null;
+    const lowerContext = String(contextValue).toLowerCase().trim();
+    let bestOption = null, highScore = 0;
+    const isNegativeContext = ['no', 'not', 'false'].some(neg => lowerContext.includes(neg));
+    for (const option of options) {
+        const lowerOption = option.toLowerCase().trim();
+        let score = 0;
+        if (lowerOption === lowerContext) score = 20;
+        else if (lowerOption.includes(lowerContext)) score = 10;
+
+        const isNegativeOption = ['no', 'not', 'false'].some(neg => lowerOption.includes(neg));
+        if (isNegativeContext && isNegativeOption) score = Math.max(score, 15);
+
+        if (score > highScore) {
+            highScore = score;
+            bestOption = option;
+        }
+    }
+    return bestOption;
+}
+
+// --- REFACTORED CORE LOGIC ---
+async function fillFrame(frame) {
+    // PASS 1: DISCOVER - Create an ordered map of all visible fields
+    console.log("\n🔎 Pass 1: Discovering all fillable fields...");
+    const fieldQueue = [];
+    const inputsAndTextareas = frame.locator('input:not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]), textarea');
+    for (let i = 0; i < await inputsAndTextareas.count(); i++) {
+        const el = inputsAndTextareas.nth(i);
+        try {
+            if (await el.isVisible() && await el.isEnabled()) {
+                const label = await getElementLabel(el);
+                const type = await el.getAttribute('type');
+                if (label) fieldQueue.push({ name: label.trim(), type: type === 'file' ? 'file' : 'text', locator: el });
+            }
+        } catch (e) { /* Ignore non-interactable elements */ }
+    }
+    const selects = frame.locator('select');
     for (let i = 0; i < await selects.count(); i++) {
         const el = selects.nth(i);
-        const options = await el.locator('option').all();
-        if (options.length > 1) {
-            try {
-                await el.selectOption({
-                    index: 1
-                });
-            } catch {}
+        try {
+            if (await el.isVisible() && await el.isEnabled()) {
+                const label = await getElementLabel(el);
+                if (label) {
+                    const options = (await el.locator('option').allInnerTexts()).map(opt => opt.trim()).filter(Boolean);
+                    if (options.length > 1) fieldQueue.push({ name: label.trim(), type: 'select', options, locator: el });
+                }
+            }
+        } catch (e) { /* Ignore non-interactable elements */ }
+    }
+    console.log(`  -> Discovered ${fieldQueue.length} fields.`);
+
+    // PASS 2: POPULATE - Determine the value for each field (local or AI)
+    console.log("\n📝 Pass 2: Populating values for each field...");
+    for (const field of fieldQueue) {
+        const matchedKey = findBestKeyMatch(field.name);
+        let valueToFill = null;
+
+        if (matchedKey) {
+            const contextValue = getValueFromContext(matchedKey, field.name);
+            if (field.type === 'select') {
+                valueToFill = findBestDropdownOption(contextValue, field.options);
+            } else {
+                valueToFill = contextValue;
+            }
+            if (valueToFill) console.log(`  [Local] Field "${field.name}" -> "${valueToFill}"`);
         }
+        
+        // If no local match was found, use AI
+        if (!valueToFill) {
+            await new Promise(resolve => setTimeout(resolve, 4100)); // Rate limiting
+            const aiSuggestion = await getAiSuggestionForSingleField(field);
+            if(aiSuggestion) {
+                valueToFill = aiSuggestion;
+                console.log(`  [AI]    Field "${field.name}" -> "${valueToFill}"`);
+            }
+        }
+        field.finalValue = valueToFill; // Store the determined value back into our map
     }
 
-    const radios = frame.locator('input[type=radio]:not([disabled])');
-    const seenNames = new Set();
-    for (let i = 0; i < await radios.count(); i++) {
-        const el = radios.nth(i);
-        const name = await el.getAttribute('name');
-        if (name && !seenNames.has(name)) {
-            try {
-                await el.check();
-                seenNames.add(name);
-            } catch {}
+    // PASS 3: EXECUTE - Iterate through the populated map and fill the form
+    console.log("\n🚀 Pass 3: Executing fill actions...");
+    for (const field of fieldQueue) {
+        if (!field.finalValue) {
+            console.log(`  -> Skipping "${field.name}" (no value found).`);
+            continue;
+        }
+        try {
+            if (field.type === 'select') {
+                const bestOption = findBestDropdownOption(field.finalValue, field.options);
+                if (bestOption) {
+                    console.log(`  -> Selecting "${bestOption}" for "${field.name}"`);
+                    await field.locator.selectOption({ label: bestOption });
+                } else {
+                     console.warn(`  -> Could not find option for "${field.finalValue}" in "${field.name}"`);
+                }
+            } else if (field.type === 'file') {
+                const lowerFieldName = field.name.toLowerCase();
+                if (lowerFieldName.includes('resume')) {
+                    console.log(`  -> Uploading resume for "${field.name}"`);
+                    await field.locator.setInputFiles(path.resolve(personalContext.resume_filename));
+                } else {
+                    console.log(`  -> Skipping file field "${field.name}" (not a resume).`);
+                }
+            } else {
+                console.log(`  -> Filling "${field.name}"`);
+                await field.locator.fill(field.finalValue);
+            }
+        } catch (e) {
+            console.error(`  -> ❌ ERROR interacting with field "${field.name}":`, e.message);
         }
     }
 }
 
+
+// --- Main Execution ---
 async function main() {
-    // ... (This function remains unchanged)
     console.log("🚀 Starting the auto-apply bot...");
-    const browser = await chromium.launch({
-        headless: false,
-        slowMo: 150
-    });
+    const browser = await chromium.launch({ headless: false, slowMo: 100 });
     const page = await browser.newPage();
-    await page.setViewportSize({
-        width: 1280,
-        height: 800
-    });
+    await page.setViewportSize({ width: 1280, height: 1024 });
 
     try {
-        await page.goto('https://github.com/SimplifyJobs/New-Grad-Positions/blob/dev/README.md', {
-            waitUntil: 'networkidle'
-        });
+        await page.goto('https://github.com/SimplifyJobs/New-Grad-Positions/blob/dev/README.md', { waitUntil: 'networkidle' });
 
-        console.log("📄 Scraping for the first valid job link...");
         const jobMap = new Map();
         const rows = page.locator('article table').first().locator('tbody tr');
-        const rowCount = await rows.count();
-
-        for (let i = 0; i < rowCount; i++) {
+        for (let i = 0; i < await rows.count(); i++) {
             const row = rows.nth(i);
             try {
-                const companyName = await row.locator('td').first().innerText({
-                    timeout: 1000
-                });
-                const linkLocator = row.locator('a:not([href^="https://simplify.jobs/"])').first();
+                const linkLocator = row.locator('a:not([href*="simplify.jobs"])').first();
                 if (await linkLocator.count() > 0) {
+                    const companyName = await row.locator('td').first().innerText({ timeout: 1000 });
                     const link = await linkLocator.getAttribute('href');
-                    if (link) {
-                        const cleaned = link.replace(/utm_source=Simplify&ref=Simplify/g, "").replace(/[?&]$/, "");
-                        jobMap.set(companyName.trim(), cleaned);
-                        break;
-                    }
+                    jobMap.set(companyName.trim(), link);
+                    break;
                 }
-            } catch {}
+            } catch (e) {}
         }
 
         if (jobMap.size === 0) {
-            console.error("❌ No valid job links found on the GitHub page.");
+            console.error("❌ No valid job links found.");
             return;
         }
 
-        const [company, firstUrl] = jobMap.entries().next().value;
-        console.log(`✅ Found job at ${company}. Navigating to: ${firstUrl}`);
-        await page.goto(firstUrl, {
-            waitUntil: 'networkidle'
-        });
+        const [company, url] = jobMap.entries().next().value;
+        console.log(`✅ Found job at ${company}. Navigating to: ${url}`);
+        await page.goto(url, { waitUntil: 'networkidle' });
 
-        console.log("🔎 Searching for an Apply button...");
-        const applyButton = page.locator('button, a').filter({
-            hasText: /apply/i
-        }).first();
-        if (await applyButton.count()) {
-            await Promise.all([
-                applyButton.click().catch(() => {}),
-                page.waitForTimeout(2000)
-            ]);
-            console.log("✅ Apply button clicked.");
-        } else {
-            console.log("ℹ️ No Apply button found, continuing.");
+        const applyButton = page.locator('button, a').filter({ hasText: /apply/i }).first();
+        if (await applyButton.count() > 0) {
+            console.log("✅ Apply button found, clicking...");
+            await applyButton.click({ timeout: 5000 }).catch(() => {});
+            await page.waitForTimeout(3000);
         }
 
         await fillFrame(page.mainFrame());
-
         for (const frame of page.frames()) {
-            if (frame === page.mainFrame()) continue;
-            try {
+            if (frame !== page.mainFrame()) {
                 await fillFrame(frame);
-            } catch {}
+            }
         }
 
-        console.log("✅ Filled all detected fields with generated values.");
-        await page.waitForTimeout(5000);
+        console.log("\n✅ Script finished processing all fields.");
+        await page.waitForTimeout(10000);
 
     } catch (error) {
-        console.error("An error occurred:", error);
+        console.error("An error occurred during the main process:", error);
     } finally {
         console.log("🛑 Bot finished.");
+        // await browser.close();
     }
 }
 
