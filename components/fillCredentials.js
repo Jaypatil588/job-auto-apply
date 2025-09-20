@@ -7,6 +7,8 @@ export async function fillCredentials(page) {
 
   if (!username && !email && !password) return false;
 
+
+  //Will need to handle the case where the accoutn already exists and needs to be logged in
   await page.waitForLoadState('domcontentloaded').catch(() => {});
   const frames = page.frames();
   for (const frame of frames) {
