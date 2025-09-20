@@ -21,6 +21,7 @@ export async function fillCredentials(page) {
         'input[id*="email" i]'
       ]);
 
+      /*
       if (!emailLocator){
       const usernameLocator = await findInput(frame, [
         'input[data-automation-id="username"]',
@@ -29,6 +30,7 @@ export async function fillCredentials(page) {
         'input[id*="user" i]',
         'input[type="text"]'
       ]);}
+      */
 
       const passwordLocator = await findInput(frame, [
         'input[data-automation-id="password"]',
@@ -73,7 +75,7 @@ export async function fillCredentials(page) {
           await emailLocator.type(value, { delay: 20 }).catch(() => emailLocator.fill(value));
         }
       }
-
+      /*
       if (!emailLocator){
       if (usernameLocator) {
         const value = username || email;
@@ -83,7 +85,7 @@ export async function fillCredentials(page) {
           await usernameLocator.fill('');
           await usernameLocator.type(value, { delay: 20 }).catch(() => usernameLocator.fill(value));
         }
-      }}
+      }}*/
 
       if (passwordLocator && password) {
         attempted = true;
@@ -101,7 +103,9 @@ export async function fillCredentials(page) {
 
       if (!attempted) continue;
 
-      const submitted = await submitLogin(page, frame, emailLocator, usernameLocator, passwordLocator, verifyLocator, beforeUrl);
+      await checkAllCheckboxes(frame);
+
+      const submitted = await submitLogin(page, frame, emailLocator, passwordLocator, verifyLocator, beforeUrl);
       if (submitted) return true;
 
       const created = await createAccount(page);
@@ -114,8 +118,9 @@ export async function fillCredentials(page) {
   return false;
 }
 
-async function submitLogin(page, frame, emailLocator, usernameLocator, passwordLocator, verifyLocator, beforeUrl) {
+async function submitLogin(page, frame, emailLocator, passwordLocator, verifyLocator, beforeUrl) {
   const submitCandidates = [
+    frame.locator('input[data-automation-id="createAccountSubmitButton"]',),
     frame.getByRole('button', { name: /sign in|log in|submit|continue|next/i }),
     frame.locator('button[type="submit"]'),
     frame.locator('input[type="submit"]'),
@@ -133,7 +138,7 @@ async function submitLogin(page, frame, emailLocator, usernameLocator, passwordL
       ]);
       if (!nav) await page.waitForLoadState('domcontentloaded').catch(() => {});
 
-      if (await didProgress(page, beforeUrl, emailLocator, usernameLocator, passwordLocator, verifyLocator)) return true;
+      if (await didProgress(page, beforeUrl, emailLocator, passwordLocator, verifyLocator)) return true;
       return false;
     } catch {
       continue;
@@ -141,21 +146,21 @@ async function submitLogin(page, frame, emailLocator, usernameLocator, passwordL
   }
 
   try {
-    const target = passwordLocator || verifyLocator || usernameLocator || emailLocator;
+    const target = passwordLocator || verifyLocator || emailLocator;
     await target?.press('Enter');
     await page.waitForLoadState('domcontentloaded', { timeout: 6000 }).catch(() => {});
-    if (await didProgress(page, beforeUrl, emailLocator, usernameLocator, passwordLocator, verifyLocator)) return true;
+    if (await didProgress(page, beforeUrl, emailLocator, passwordLocator, verifyLocator)) return true;
   } catch {}
 
   return false;
 }
 
-async function didProgress(page, beforeUrl, emailLocator, usernameLocator, passwordLocator, verifyLocator) {
+async function didProgress(page, beforeUrl, emailLocator, passwordLocator, verifyLocator) {
   await page.waitForTimeout(2000).catch(() => {});
   const afterUrl = page.url();
   if (afterUrl !== beforeUrl) return true;
 
-  const locators = [emailLocator, usernameLocator, passwordLocator, verifyLocator];
+  const locators = [emailLocator, passwordLocator, verifyLocator];
   for (const locator of locators) {
     if (locator && await locator.isVisible().catch(() => false)) return false;
   }
@@ -196,4 +201,21 @@ async function locatorsReferToSame(a, b) {
   } catch {
     return false;
   }
+}
+
+async function checkAllCheckboxes(frame) {
+  try {
+    const checkboxes = frame.locator('input[type="checkbox"]').filter({ hasNot: frame.locator('[disabled]') });
+    const count = await checkboxes.count().catch(() => 0);
+    for (let i = 0; i < count; i++) {
+      const box = checkboxes.nth(i);
+      const visible = await box.isVisible().catch(() => false);
+      const enabled = await box.isEnabled().catch(() => false);
+      if (!visible || !enabled) continue;
+      const checked = await box.isChecked().catch(() => false);
+      if (!checked) {
+        await box.click({ timeout: 3000 }).catch(() => box.evaluate(el => el.click()).catch(() => {}));
+      }
+    }
+  } catch {}
 }
