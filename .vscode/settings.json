@@ -1,0 +1,7 @@
+{
+  "debug.javascript.autoAttachFilter": "smart",
+  "debug.javascript.terminalOptions": {
+    "name": "Auto Attach"
+  }
+}
+
