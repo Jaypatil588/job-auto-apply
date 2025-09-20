@@ -8,7 +8,7 @@ async function main() {
 
     const browser = await chromium.launch({ headless: false, slowMo: 100 });
     const page = await browser.newPage();
-    await page.setViewportSize({ width: 1280, height: 1024 });
+    await page.setViewportSize({ width: 600, height: 600 });
 
     try {
         await initializeAll();
