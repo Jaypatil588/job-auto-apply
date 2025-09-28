@@ -1,6 +1,6 @@
 export async function findJobLinks(page) {
     await page.goto('https://github.com/SimplifyJobs/New-Grad-Positions/blob/dev/README.md', {
-        waitUntil: 'networkidle'
+        waitUntil: 'domcontentloaded'
     });
 
     const jobMap = new Map();

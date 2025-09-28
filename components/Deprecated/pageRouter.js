@@ -1,6 +1,9 @@
-import { clickApplyButton } from './navigation.js';
+import { clickApplyButton } from '../navigation.js';
 import { fillAllFrames } from './formParser.js';
 import { fillCredentials } from './fillCredentials.js';
+import { resumeFill } from '../resumeFill.js';
+import { createAccount } from './createAccount.js';
+import { signIn } from './signIn.js';
 
 export async function detectPageState(page) {
   await page.waitForLoadState('domcontentloaded').catch(() => {});
@@ -32,15 +35,45 @@ export async function detectPageState(page) {
 export async function runDynamicFlow(page) {
   let activePage = page;
   const maxSteps = 8;
+  let workdayFlow = false;
+  let workdayCreateAttempted = false;
   for (let step = 1; step <= maxSteps; step++) {
     activePage = await ensureActivePage(activePage);
     await activePage.waitForLoadState('domcontentloaded').catch(() => {});
     await activePage.waitForTimeout(3000).catch(() => {});
     const state = await detectPageState(activePage);
     console.log(`Dynamic flow step ${step}: state=${state}`);
-    
+    const currentUrl = (activePage.url() || '').toLowerCase();
+    if (currentUrl.includes('workday')) workdayFlow = true;
 
     if (state === 'login') {
+      if (workdayFlow) {
+        if (!workdayCreateAttempted) {
+          workdayCreateAttempted = true;
+          console.log('Workday login detected. Attempting createAccount flow.');
+          const result = await createAccount(activePage);
+          await activePage.waitForLoadState('domcontentloaded').catch(() => {});
+          await activePage.waitForTimeout(1500).catch(() => {});
+          const postState = await detectPageState(activePage);
+          if (postState !== 'login') {
+            console.log(`createAccount transitioned to state=${postState}`);
+            continue;
+          }
+          console.log('createAccount did not progress, switching to signIn.');
+          const signed = await signIn(activePage);
+          console.log(`signIn result: ${signed}`);
+          if (!signed) return false;
+          await activePage.waitForLoadState('domcontentloaded').catch(() => {});
+          continue;
+        }
+
+        const signed = await signIn(activePage);
+        console.log(`signIn result: ${signed}`);
+        if (!signed) return false;
+        await activePage.waitForLoadState('domcontentloaded').catch(() => {});
+        continue;
+      }
+
       const filled = await fillCredentials(activePage);
       console.log(`fillCredentials result: ${filled}`);
       if (!filled) return false;
@@ -51,11 +84,19 @@ export async function runDynamicFlow(page) {
     if (state === 'apply') {
       const clicked = await clickApplyButton(activePage);
       if (!clicked) return false;
+      workdayFlow = workdayFlow || (activePage.url() || '').toLowerCase().includes('workday');
+      workdayCreateAttempted = false;
       await activePage.waitForLoadState('domcontentloaded').catch(() => {});
       continue;
     }
 
     if (state === 'form') {
+      const currentUrl = (activePage.url() || '').toLowerCase();
+      if (currentUrl.includes('workday')) {
+        const resumeHandled = await resumeFill(activePage);
+        return resumeHandled;
+      }
+
       await fillAllFrames(activePage);
       return true;
     }
