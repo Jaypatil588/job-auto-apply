@@ -22,21 +22,20 @@ export async function signIn(page) {
   await container.locator('[data-automation-id="email"]').fill(username);
   await container.locator('[data-automation-id="password"]').fill(password);
   //await container.locator('button[type="submit"]').first().click();
-  await clickSignInButton(container);
-
-
-  return true;
+  return await clickSignInButton(page);
+  //return true;
 }
 
 async function clickSignInButton(page) {
+  console.log('Clicking Sign In button...');
   const frames = page.frames();
   const selectors = [
-    (frame) => frame.getByRole('link', { name: /sign in/i }),
+    (frame) => frame.getByRole('link', { name: /Sign In/i }),
     (frame) => frame.getByRole('button', { name: /sign in/i }),
     (frame) => frame.locator(
-      ' a:has-text("signIn" i)'
+      ' a:has-text("Sign In" i)'
     ),
-    (frame) => frame.locator('[data-automation-id="signInButton"]'),
+    (frame) => frame.locator('[data-automation-id="signInSubmitButton"]'),
     (frame) => frame.locator('[data-automation-id="click_filter"]'),
     (frame) => frame.locator('[data-automation-id="noCaptchaWrapper"]')
 

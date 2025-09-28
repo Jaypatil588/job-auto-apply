@@ -8,10 +8,13 @@ export async function createAccount(page) {
   await page.locator('[data-automation-id="email"]').fill(email);
   await page.locator('[data-automation-id="password"]').fill(password);
   await page.locator('[data-automation-id="verifyPassword"]').fill(password);
+  console.log('Calling SignIn');
 
   await clickCreateAccountButton(page);
+  console.log('Called SignIn after CreateAccount');
   await signIn(page);
   console.log('Called SignIn after CreateAccount');
+  return true;
 }
 
 async function clickCreateAccountButton(page) {
