@@ -3,6 +3,8 @@ import { initializeAll } from './components/envSetup.js';
 import { performNavigationFlow } from './components/navigation.js';
 // Deprecated flows removed. We'll route per-site going forward.
 import { signIn as workdaySignIn } from './NewComponents/signIn.js';
+import { createAccount as workdayCreateAccount } from './NewComponents/createAccount.js';
+import { handleResumeUpload } from './NewComponents/resumeUpload.js';
 
 async function main() {
     console.log('Starting job auto-apply bot');
@@ -22,13 +24,23 @@ async function main() {
 
         const currentUrl = page.url();
         if (/workday/i.test(currentUrl)) {
-            console.log('Detected Workday URL. Proceeding to Workday sign-in flow.');
-            await workdaySignIn(page);
+            console.log('Detected Workday URL. Attempting sign-in.');
+            const signedIn = await workdaySignIn(page);
+            if (!signedIn) {
+                console.log('Sign-in not detected. Proceeding to create-account flow.');
+                await workdayCreateAccount(page).catch(() => { });
+                // console.log('Attempting resume upload..');
+                // const uploadCheck = await handleResumeUpload(page);
+                // if (!uploadCheck) {
+                //     console.log('Resume not uploaded');
+                // }
+            }
+
         } else {
             console.log('No specific flow matched for URL:', currentUrl);
         }
 
-        await page.waitForTimeout(10000);
+        await page.waitForTimeout(2000);
     } catch (error) {
         console.error('Main process error:', error);
     } finally {
