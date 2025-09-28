@@ -1,5 +1,5 @@
 import 'dotenv/config';
-
+import { signIn } from './signIn.js';
 export async function createAccount(page) {
   const email = process.env.JOB_PORTAL_EMAIL || process.env.JOB_PORTAL_USERNAME;
   const password = process.env.JOB_PORTAL_PASSWORD;
@@ -9,7 +9,9 @@ export async function createAccount(page) {
   await page.locator('[data-automation-id="password"]').fill(password);
   await page.locator('[data-automation-id="verifyPassword"]').fill(password);
 
-  return await clickCreateAccountButton(page);
+  await clickCreateAccountButton(page);
+  await signIn(page);
+  console.log('Called SignIn after CreateAccount');
 }
 
 async function clickCreateAccountButton(page) {
